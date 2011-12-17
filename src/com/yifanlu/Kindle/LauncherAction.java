@@ -1,6 +1,5 @@
 package com.yifanlu.Kindle;
 
-import com.amazon.ebook.booklet.reader.sdk.ui.MenuInserter;
 import com.amazon.ebook.booklet.reader.sdk.ui.ReaderAction;
 import com.amazon.ebook.util.thread.ThreadPool;
 
@@ -14,57 +13,58 @@ import java.awt.event.ActionEvent;
  * Time: 9:34 PM
  * To change this template use File | Settings | File Templates.
  */
-public abstract class LauncherAction extends ReaderAction implements Runnable, Actionable {
+public abstract class LauncherAction extends ReaderAction implements Runnable {
     private int mPriority;
     private String mName;
     private boolean mHasArrow;
-    
-    public LauncherAction(String name, int priority){
+
+    public LauncherAction(String name, int priority) {
         this(name, priority, null);
     }
 
-    public LauncherAction(String name, int priority, Icon icon){
+    public LauncherAction(String name, int priority, Icon icon) {
         super(name, icon);
         this.mPriority = priority;
         this.mName = name;
         this.mHasArrow = false;
+        this.setEnabled(true);
     }
 
     public final void actionPerformed(ActionEvent actionEvent) {
         ThreadPool.getInstance().runIt(this, "Launcher");
     }
 
-    public void run() {
+    public final void run() {
         doAction();
     }
-    
-    public String getValue(){
+
+    public String getValue() {
         return this.mName;
     }
 
     public abstract void doAction();
-    
-    public int compareTo(Object other){
-        if(!(other instanceof LauncherAction))
+
+    public int compareTo(Object other) {
+        if (!(other instanceof LauncherAction))
             return -1;
-        if(this.mPriority == ((LauncherAction)other).mPriority)
-            return this.mName.compareTo(((LauncherAction)other).mName);
-        return this.mPriority - ((LauncherAction)other).mPriority;
+        if (this.mPriority == ((LauncherAction) other).mPriority)
+            return this.mName.compareTo(((LauncherAction) other).mName);
+        return this.mPriority - ((LauncherAction) other).mPriority;
     }
 
-    public void setHasArrow(boolean hasArrow){
+    public void setHasArrow(boolean hasArrow) {
         mHasArrow = hasArrow;
     }
 
-    public boolean hasArrow(){
+    public boolean hasArrow() {
         return mHasArrow;
     }
 
-    public int getPriority(){
+    public int getPriority() {
         return mPriority;
     }
 
     public int getType() {
-        return ReaderAction.TYPE_PLUGINS;
+        return ReaderAction.TYPE_ALL;
     }
 }
