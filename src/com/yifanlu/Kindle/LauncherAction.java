@@ -18,6 +18,10 @@ public abstract class LauncherAction extends ReaderAction implements Runnable {
     private String mName;
     private boolean mHasArrow;
 
+    public LauncherAction(String name) {
+        this(name, ReaderAction.PRIORITY_PLUGINS);
+    }
+
     public LauncherAction(String name, int priority) {
         this(name, priority, null);
     }

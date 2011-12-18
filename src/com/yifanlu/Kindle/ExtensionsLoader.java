@@ -1,5 +1,6 @@
 package com.yifanlu.Kindle;
 
+import org.json.simple.parser.ParseException;
 import org.kxml2.io.KXmlParser;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -74,10 +75,13 @@ public class ExtensionsLoader {
         } catch (IllegalAccessException e) {
             KindleLauncher.LOG.error("Error parsing extension menu. Cannot create object from Java class. " + e.getMessage());
             e.printStackTrace();
+        } catch (ParseException e) {
+            KindleLauncher.LOG.error("Error parsing extension menu. Cannot parse JSON menu. " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    private void parseMenus(KXmlParser parser, Extension extObj, File extDir) throws IOException, XmlPullParserException, ClassNotFoundException, IllegalAccessException, InstantiationException {
+    private void parseMenus(KXmlParser parser, Extension extObj, File extDir) throws IOException, XmlPullParserException, ClassNotFoundException, IllegalAccessException, InstantiationException, ParseException {
         while (parser.nextTag() != XmlPullParser.END_TAG) {
             parser.require(XmlPullParser.START_TAG, null, "menu");
 

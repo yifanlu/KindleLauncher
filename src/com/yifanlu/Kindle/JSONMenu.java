@@ -1,8 +1,14 @@
 package com.yifanlu.Kindle;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * Created by IntelliJ IDEA.
@@ -13,18 +19,13 @@ import java.util.Arrays;
  */
 public class JSONMenu implements Menuable {
     private File mJsonFile;
-    private LauncherMenu[] mMenuItems;
+    private LauncherAction[] mMenuItems;
     private boolean mDynamic;
 
     public JSONMenu(File jsonFile) {
         mJsonFile = jsonFile;
-        mMenuItems = new LauncherMenu[]{};
+        mMenuItems = new LauncherAction[]{};
         mDynamic = false;
-    }
-
-    public void addMenuItem(LauncherMenu menu) {
-        mMenuItems = (LauncherMenu[]) Arrays.copyOf(mMenuItems, mMenuItems.length + 1);
-        mMenuItems[mMenuItems.length - 1] = menu;
     }
 
     public void addItemsToMenu(LauncherMenu menu) {
@@ -33,6 +34,9 @@ public class JSONMenu implements Menuable {
                 parseJSONMenu();
             } catch (IOException e) {
                 KindleLauncher.LOG.error("Cannot create menu because file " + mJsonFile.getAbsolutePath() + " cannot be read.");
+                e.printStackTrace();
+            } catch (ParseException e) {
+                KindleLauncher.LOG.error("Cannot create menu because file " + mJsonFile.getAbsolutePath() + " cannot be parsed.");
                 e.printStackTrace();
             }
         }
@@ -49,8 +53,49 @@ public class JSONMenu implements Menuable {
         return mDynamic;
     }
 
-    public void parseJSONMenu() throws IOException {
+    public void parseJSONMenu() throws IOException, ParseException {
         mMenuItems = new LauncherMenu[]{};
+        FileReader read = new FileReader(mJsonFile);
+        JSONParser parse = new JSONParser();
+        JSONObject obj = (JSONObject) parse.parse(read);
+        LauncherAction action = jsonToAction(obj);
+        if (action instanceof LauncherMenu && action.getValue().equals("No Text")) {
+            mMenuItems = ((LauncherMenu) action).getMenuItems();
+        } else {
+            mMenuItems = new LauncherAction[]{action};
+        }
+    }
+
+    private LauncherAction jsonToAction(JSONObject json) throws IOException {
+        String name = (String) json.get("name");
+        Number priorityNum = (Number) json.get("priority");
+        int priority;
+        String action = (String) json.get("action");
+        String params = (String) json.get("params");
+        JSONArray items = (JSONArray) json.get("items");
+        LauncherAction launcherAction = null;
+        if (name == null)
+            name = "No Text";
+        if (priorityNum == null)
+            priority = 0;
+        else
+            priority = priorityNum.intValue();
+        if (items != null) {
+            launcherAction = new LauncherMenu(name, priority);
+            Iterator it = items.iterator();
+            while (it.hasNext()) {
+                JSONObject itemObj = (JSONObject) it.next();
+                ((LauncherMenu) launcherAction).addMenuItem(jsonToAction(itemObj));
+            }
+        } else if (action != null) {
+            if (params == null)
+                params = "";
+            File script = new File(mJsonFile, action);
+            launcherAction = new LauncherScript(name, priority, script, params);
+        } else {
+            throw new IOException("No valid action found for menu item: " + json.toJSONString());
+        }
+        return launcherAction;
 
     }
 }

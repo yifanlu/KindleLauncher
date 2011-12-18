@@ -9,6 +9,4 @@ package com.yifanlu.Kindle;
  */
 public interface Menuable {
     public void addItemsToMenu(LauncherMenu menu);
-
-    public boolean isDynamic();
 }
