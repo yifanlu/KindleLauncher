@@ -7,6 +7,7 @@ import com.amazon.ebook.util.log.Log;
 import com.amazon.kindle.restricted.runtime.Framework;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.ResourceBundle;
@@ -21,6 +22,7 @@ import java.util.ResourceBundle;
 public class KindleLauncher extends LauncherMenu implements MenuInserter {
     public static final ResourceBundle RESOURCES = ResourceBundle.getBundle("com.yifanlu.Kindle.KindleLauncherResources");
     public static final SystemServices SERVICES = (SystemServices) Framework.getService(SystemServices.class);
+    private static final ExtensionsLoader EXTENSIONS_LOADER = new ExtensionsLoader(new File("/mnt/us/extensions"));
     public static final Log LOG = Log.getInstance("KindleLauncher");
     private static KindleLauncher myInstance;
     private ArrayList mExtensions;
@@ -38,6 +40,7 @@ public class KindleLauncher extends LauncherMenu implements MenuInserter {
 
     public void createMenu() {
         LOG.debug("Creating launcher menu");
+        mExtensions = EXTENSIONS_LOADER.loadExtensions();
         Iterator it = mExtensions.iterator();
         while (it.hasNext()) {
             Extension ext = (Extension) it.next();
@@ -46,7 +49,7 @@ public class KindleLauncher extends LauncherMenu implements MenuInserter {
     }
 
     public synchronized void doAction() {
-        if (isMenuEmpty()) {
+        if (mExtensions.isEmpty() || isMenuEmpty()) {
             createMenu();
         }
         super.doAction();

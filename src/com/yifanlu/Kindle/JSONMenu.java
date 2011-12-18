@@ -41,6 +41,8 @@ public class JSONMenu implements Menuable {
             }
         }
         for (int i = 0; i < mMenuItems.length; i++) {
+            if (mMenuItems[i] instanceof LauncherMenu)
+                ((LauncherMenu) mMenuItems[i]).setParent(menu);
             menu.addMenuItem(mMenuItems[i]);
         }
     }
@@ -58,7 +60,7 @@ public class JSONMenu implements Menuable {
         FileReader read = new FileReader(mJsonFile);
         JSONParser parse = new JSONParser();
         JSONObject obj = (JSONObject) parse.parse(read);
-        LauncherAction action = jsonToAction(obj);
+        LauncherAction action = jsonToAction(obj, null);
         if (action instanceof LauncherMenu && action.getValue().equals("No Text")) {
             mMenuItems = ((LauncherMenu) action).getMenuItems();
         } else {
@@ -66,7 +68,7 @@ public class JSONMenu implements Menuable {
         }
     }
 
-    private LauncherAction jsonToAction(JSONObject json) throws IOException {
+    private LauncherAction jsonToAction(JSONObject json, LauncherMenu parent) throws IOException {
         String name = (String) json.get("name");
         Number priorityNum = (Number) json.get("priority");
         int priority;
@@ -81,16 +83,16 @@ public class JSONMenu implements Menuable {
         else
             priority = priorityNum.intValue();
         if (items != null) {
-            launcherAction = new LauncherMenu(name, priority);
+            launcherAction = new LauncherMenu(name, priority, parent);
             Iterator it = items.iterator();
             while (it.hasNext()) {
                 JSONObject itemObj = (JSONObject) it.next();
-                ((LauncherMenu) launcherAction).addMenuItem(jsonToAction(itemObj));
+                ((LauncherMenu) launcherAction).addMenuItem(jsonToAction(itemObj, (LauncherMenu) launcherAction));
             }
         } else if (action != null) {
             if (params == null)
                 params = "";
-            File script = new File(mJsonFile, action);
+            File script = new File(mJsonFile.getParentFile(), action);
             launcherAction = new LauncherScript(name, priority, script, params);
         } else {
             throw new IOException("No valid action found for menu item: " + json.toJSONString());

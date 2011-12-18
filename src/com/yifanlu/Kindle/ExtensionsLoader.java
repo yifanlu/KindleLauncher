@@ -1,11 +1,13 @@
 package com.yifanlu.Kindle;
 
+import com.amazon.ebook.util.log.LogMessage;
 import org.json.simple.parser.ParseException;
 import org.kxml2.io.KXmlParser;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.*;
+import java.util.ArrayList;
 
 /**
  * Created by IntelliJ IDEA.
@@ -16,14 +18,17 @@ import java.io.*;
  */
 public class ExtensionsLoader {
     public static final String EXTENSIONS_DIRECTORY = "/mnt/us/extensions";
+    private static final LogMessage LOADED_EXTENSION = new LogMessage("ExtensionLoad", new String[]{"name", "version", "author", "id"});
+    private static final LogMessage MENU_ATTRIBUTES = new LogMessage("MenuLoad", new String[]{"name", "value"});
     private File mDirectory;
 
     public ExtensionsLoader(File directory) {
         mDirectory = directory;
     }
 
-    public void loadExtensions() {
+    public ArrayList loadExtensions() {
         KXmlParser parser = new KXmlParser();
+        ArrayList extList = new ArrayList();
         File[] extensions = mDirectory.listFiles(new FileFilter() {
             public boolean accept(File file) {
                 return file.isDirectory();
@@ -33,6 +38,7 @@ public class ExtensionsLoader {
         try {
             for (i = 0; i < extensions.length; i++) {
                 File ext = extensions[i];
+                KindleLauncher.LOG.info("Loading: " + ext.getAbsolutePath());
                 File config = new File(ext, "config.xml");
                 Extension extObj = new Extension();
                 parser.setInput(new InputStreamReader(new FileInputStream(config)));
@@ -53,6 +59,8 @@ public class ExtensionsLoader {
                 parser.require(XmlPullParser.END_TAG, null, "extension");
                 parser.next();
                 parser.require(XmlPullParser.END_DOCUMENT, null, null);
+                extList.add(extObj);
+                KindleLauncher.LOG.info(LOADED_EXTENSION, new String[]{extObj.getName(), extObj.getVersion(), extObj.getAuthor(), extObj.getId()}, "");
             }
         } catch (IOException e) {
             KindleLauncher.LOG.error("Error reading extension config. " + e.getMessage());
@@ -67,7 +75,7 @@ public class ExtensionsLoader {
             KindleLauncher.LOG.error("Error parsing extension menu. Cannot find menu Java class. " + e.getMessage());
             e.printStackTrace();
         } catch (ClassCastException e) {
-            KindleLauncher.LOG.error("Error parsing extension menu. Java class not implementing Menuable. " + e.getMessage());
+            KindleLauncher.LOG.error("Error parsing extension menu. " + e.getMessage());
             e.printStackTrace();
         } catch (InstantiationException e) {
             KindleLauncher.LOG.error("Error parsing extension menu. Cannot create object from Java class. " + e.getMessage());
@@ -79,19 +87,19 @@ public class ExtensionsLoader {
             KindleLauncher.LOG.error("Error parsing extension menu. Cannot parse JSON menu. " + e.getMessage());
             e.printStackTrace();
         }
+        return extList;
     }
 
     private void parseMenus(KXmlParser parser, Extension extObj, File extDir) throws IOException, XmlPullParserException, ClassNotFoundException, IllegalAccessException, InstantiationException, ParseException {
         while (parser.nextTag() != XmlPullParser.END_TAG) {
             parser.require(XmlPullParser.START_TAG, null, "menu");
 
-            String text = parser.nextText();
             Menuable menu = null;
             boolean isJava = false;
             boolean isDynamic = false;
             String jarFile = null;
-
             int i = parser.getAttributeCount();
+            KindleLauncher.LOG.info("Attributes: " + parser.getAttributeCount());
             while (i-- > 0) {
                 String name = parser.getAttributeName(i);
                 String value = parser.getAttributeValue(i);
@@ -101,18 +109,24 @@ public class ExtensionsLoader {
                     isDynamic = value.equals("true");
                 else if (name.equals("jar"))
                     jarFile = value;
+                KindleLauncher.LOG.info(MENU_ATTRIBUTES, new String[]{name, value}, "");
             }
+
+            String text = parser.nextText();
 
             if (isJava) {
                 JARClassLoader classLoader = JARClassLoader.getInstance();
                 classLoader.addJar(new File(extDir, jarFile));
                 Class cls = classLoader.loadClass(text);
                 menu = (Menuable) cls.newInstance();
+                KindleLauncher.LOG.info("Loaded class: " + text);
             } else {
-                JSONMenu jsonMenu = new JSONMenu(new File(extDir, text));
+                File jsonFile = new File(extDir, text);
+                JSONMenu jsonMenu = new JSONMenu(jsonFile);
                 jsonMenu.setDynamic(isDynamic);
                 jsonMenu.parseJSONMenu();
                 menu = jsonMenu;
+                KindleLauncher.LOG.info("Loaded menu: " + jsonFile.getAbsolutePath());
             }
 
             extObj.setMenu(menu);

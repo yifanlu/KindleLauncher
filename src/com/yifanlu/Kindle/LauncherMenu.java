@@ -17,23 +17,23 @@ import javax.swing.*;
 public class LauncherMenu extends LauncherAction {
     private MenuDialog mDialog;
     private PriorityQueue mItems;
-    private LauncherMenu mPreviousMenu;
+    private LauncherMenu mParent;
 
     public LauncherMenu(String name, int priority) {
         this(name, priority, null);
     }
 
-    public LauncherMenu(String name, int priority, LauncherMenu previous) {
+    public LauncherMenu(String name, int priority, LauncherMenu parent) {
         super(name, priority);
         mItems = new PriorityQueue();
-        mPreviousMenu = previous;
+        mParent = parent;
         setHasArrow(true);
     }
 
     public synchronized void doAction() {
         getMenu().postDialog(getCurrentAppId(), true);
-        if (mPreviousMenu != null) {
-            mPreviousMenu.putValue(Action.NAME, mPreviousMenu.getValue());
+        if (mParent != null) {
+            mParent.putValue(Action.NAME, mParent.getValue());
         }
     }
 
@@ -59,9 +59,9 @@ public class LauncherMenu extends LauncherAction {
                 mDialog.addAction(item);
             copy.add(item);
         }
-        if (mPreviousMenu != null) {
-            mPreviousMenu.putValue(Action.NAME, "« Previous");
-            mDialog.addAction(mPreviousMenu);
+        if (mParent != null) {
+            mParent.putValue(Action.NAME, "« Previous");
+            mDialog.addAction(mParent);
         }
         mItems = copy;
     }
@@ -77,7 +77,7 @@ public class LauncherMenu extends LauncherAction {
     }
 
     public LauncherAction[] getMenuItems() {
-        return (LauncherAction[]) mItems.toArray();
+        return (LauncherAction[]) mItems.toArray(new LauncherAction[0]);
     }
 
     public boolean isMenuEmpty() {
@@ -89,5 +89,13 @@ public class LauncherMenu extends LauncherAction {
             this.initMenu();
         }
         return mDialog;
+    }
+
+    public void setParent(LauncherMenu parent) {
+        this.mParent = parent;
+    }
+
+    public LauncherMenu getParent() {
+        return this.mParent;
     }
 }
