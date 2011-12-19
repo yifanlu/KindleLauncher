@@ -175,7 +175,11 @@ public class JSONMenu implements Menuable {
         } else if (action != null) {
             if (params == null)
                 params = "";
-            File script = new File(mJsonFile.getParentFile(), action);
+            File script;
+            if (action.startsWith("/"))
+                script = new File(action);
+            else
+                script = new File(mJsonFile.getParentFile(), action);
             launcherAction = new LauncherScript(name, priority, script, params);
             KindleLauncher.LOG.debug(JSON_MENU_ITEM, new String[]{name, action, params}, "");
         } else {

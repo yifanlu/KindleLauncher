@@ -211,11 +211,7 @@ public class ExtensionsLoader {
                 menu = (Menuable) cls.newInstance();
                 KindleLauncher.LOG.debug("Loaded class: " + text);
             } else {
-                File jsonFile;
-                if (text.startsWith("/"))
-                    jsonFile = new File(text);
-                else
-                    jsonFile = new File(extDir, text);
+                File jsonFile = new File(extDir, text);
                 JSONMenu jsonMenu = new JSONMenu(jsonFile);
                 jsonMenu.setDynamic(isDynamic);
                 jsonMenu.parseJSONMenu();
