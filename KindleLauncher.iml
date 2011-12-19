@@ -8,6 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Kindle JARs" level="project" />
+    <orderEntry type="library" name="Patched Classes" level="project" />
   </component>
 </module>
 

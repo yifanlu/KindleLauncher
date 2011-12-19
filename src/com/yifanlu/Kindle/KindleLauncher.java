@@ -33,14 +33,21 @@ public class KindleLauncher extends LauncherMenu implements MenuInserter {
     }
 
     public static Action getInstance() {
+        LOG.debug("We are being called!");
         if (myInstance == null)
             myInstance = new KindleLauncher();
         return myInstance;
     }
 
-    public void createMenu() {
-        LOG.debug("Creating launcher menu");
+    public void reloadExtensions() {
+        LOG.debug("Loading extensions");
         mExtensions = EXTENSIONS_LOADER.loadExtensions();
+    }
+
+    public void createMenu() {
+        if (mExtensions.isEmpty() || isMenuEmpty())
+            reloadExtensions();
+        clearMenu();
         Iterator it = mExtensions.iterator();
         while (it.hasNext()) {
             Extension ext = (Extension) it.next();
@@ -49,9 +56,7 @@ public class KindleLauncher extends LauncherMenu implements MenuInserter {
     }
 
     public synchronized void doAction() {
-        if (mExtensions.isEmpty() || isMenuEmpty()) {
-            createMenu();
-        }
+        createMenu();
         super.doAction();
     }
 

@@ -1,5 +1,6 @@
 package com.yifanlu.Kindle;
 
+import com.amazon.ebook.util.log.LogMessage;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -18,6 +19,7 @@ import java.util.Iterator;
  * To change this template use File | Settings | File Templates.
  */
 public class JSONMenu implements Menuable {
+    private static final LogMessage JSON_MENU_ITEM = new LogMessage("JsonMenuItem", new String[]{"name", "action", "params"});
     private File mJsonFile;
     private LauncherAction[] mMenuItems;
     private boolean mDynamic;
@@ -30,6 +32,8 @@ public class JSONMenu implements Menuable {
 
     public void addItemsToMenu(LauncherMenu menu) {
         if (isDynamic()) {
+            KindleLauncher.LOG.debug("Reloading the menu.");
+            mJsonFile = new File(mJsonFile.getAbsolutePath());
             try {
                 parseJSONMenu();
             } catch (IOException e) {
@@ -84,6 +88,7 @@ public class JSONMenu implements Menuable {
             priority = priorityNum.intValue();
         if (items != null) {
             launcherAction = new LauncherMenu(name, priority, parent);
+            KindleLauncher.LOG.debug(JSON_MENU_ITEM, new String[]{name, "submenu", ""}, "");
             Iterator it = items.iterator();
             while (it.hasNext()) {
                 JSONObject itemObj = (JSONObject) it.next();
@@ -94,6 +99,7 @@ public class JSONMenu implements Menuable {
                 params = "";
             File script = new File(mJsonFile.getParentFile(), action);
             launcherAction = new LauncherScript(name, priority, script, params);
+            KindleLauncher.LOG.debug(JSON_MENU_ITEM, new String[]{name, action, params}, "");
         } else {
             throw new IOException("No valid action found for menu item: " + json.toJSONString());
         }

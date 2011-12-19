@@ -17,7 +17,6 @@ import java.net.URLClassLoader;
 public class JARClassLoader extends URLClassLoader {
     private static JARClassLoader myInstance;
     private static final LogMessage JAR_LOAD_ERROR = new LogMessage("JarLoad", new String[]{"jar file", "java error"});
-    private static final LogMessage CLASS_LOAD_ERROR = new LogMessage("ClassLoad", new String[]{"class", "java error"});
 
     public JARClassLoader() {
         super(new URL[]{});

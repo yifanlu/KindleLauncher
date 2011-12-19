@@ -48,7 +48,7 @@ public class LauncherMenu extends LauncherAction {
     }
 
     public void initMenu() {
-        mDialog = new MenuDialog(getCurrentAppId(), false);
+        mDialog = new MenuDialog(getCurrentAppId());
         mDialog.setTitle(this.getValue());
         PriorityQueue copy = new PriorityQueue();
         while (!mItems.isEmpty()) {
@@ -82,6 +82,10 @@ public class LauncherMenu extends LauncherAction {
 
     public boolean isMenuEmpty() {
         return mItems.isEmpty();
+    }
+
+    public void clearMenu() {
+        mItems.clear();
     }
 
     public MenuDialog getMenu() {

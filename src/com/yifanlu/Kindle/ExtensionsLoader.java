@@ -99,7 +99,7 @@ public class ExtensionsLoader {
             boolean isDynamic = false;
             String jarFile = null;
             int i = parser.getAttributeCount();
-            KindleLauncher.LOG.info("Attributes: " + parser.getAttributeCount());
+            KindleLauncher.LOG.debug("Attributes: " + parser.getAttributeCount());
             while (i-- > 0) {
                 String name = parser.getAttributeName(i);
                 String value = parser.getAttributeValue(i);
@@ -109,7 +109,7 @@ public class ExtensionsLoader {
                     isDynamic = value.equals("true");
                 else if (name.equals("jar"))
                     jarFile = value;
-                KindleLauncher.LOG.info(MENU_ATTRIBUTES, new String[]{name, value}, "");
+                KindleLauncher.LOG.debug(MENU_ATTRIBUTES, new String[]{name, value}, "");
             }
 
             String text = parser.nextText();
@@ -119,14 +119,14 @@ public class ExtensionsLoader {
                 classLoader.addJar(new File(extDir, jarFile));
                 Class cls = classLoader.loadClass(text);
                 menu = (Menuable) cls.newInstance();
-                KindleLauncher.LOG.info("Loaded class: " + text);
+                KindleLauncher.LOG.debug("Loaded class: " + text);
             } else {
                 File jsonFile = new File(extDir, text);
                 JSONMenu jsonMenu = new JSONMenu(jsonFile);
                 jsonMenu.setDynamic(isDynamic);
                 jsonMenu.parseJSONMenu();
                 menu = jsonMenu;
-                KindleLauncher.LOG.info("Loaded menu: " + jsonFile.getAbsolutePath());
+                KindleLauncher.LOG.debug("Loaded menu: " + jsonFile.getAbsolutePath());
             }
 
             extObj.setMenu(menu);

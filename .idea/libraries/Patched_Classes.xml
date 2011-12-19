@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="Patched Classes">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/patch" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
