@@ -161,14 +161,23 @@ public class ExtensionsLoader {
      * <p/>
      * <pre>
      *      &lt;menus&gt;
-     *          &lt;menu type=&quot;VALUE&quot; jar=&quot;VALUE&quot; dynamic=&quot;VALUE&quot;&gt;TEXT&lt;/menu&gt;
+     *          &lt;menu type=&quot;VALUE&quot; jar=&quot;VALUE&quot; params=&quot;VALUE&quot; timeout=&quot;VALUE&quot; dynamic=&quot;VALUE&quot;&gt;TEXT&lt;/menu&gt;
      *      &lt;/menus&gt;
      * </pre>
      * <p/>
-     * Where type is either "java" or "json", jar is required only for "java" types and is the path to the Jar file
-     * containing the Menuable class relative to config.xml, dynamic is required only for JSON types and tells the
-     * loader to re-read the JSON file each time the menu is opened, and the text of the element is either the path
-     * to the JSON menu file or the Java class to load.
+     * Where type is either "java" or "json" or "stdout-json";
+     * jar is required only for "java" types and is the path to the Jar file containing the Menuable class relative
+     * to config.xml,
+     * dynamic is required only for JSON types and tells the loader to re-read the JSON file each 
+     * time the menu is opened, 
+     * params is used only for stdout-json and tells the loader to add those params to the program it calls 
+     * to get the menu
+     * timeout is used only for stdout-json and tells the launcher to terminate the command if it exceeds timeout;
+     * timeout is int and measured in seconds; default is 1 second; specify 0 to turn it off
+     * the text of the element is:
+     * path to the JSON menu file if type is "json" 
+     * Java class to load if type is "java"
+     * command to execute which stdout would be considered JSON menu if type is "stdout-json" 
      *
      * @param parser {@link org.kxml2.io.KXmlParser}
      * @param extObj The {@link Extension} object to fill.
@@ -186,19 +195,38 @@ public class ExtensionsLoader {
 
             Menuable menu;
             boolean isJava = false;
+            boolean isJson = false;
+            boolean isStdout = false;
             boolean isDynamic = false;
+            int stdoutTimeout = 1;
             String jarFile = null;
+            String stdoutParams = "";
             int i = parser.getAttributeCount();
             KindleLauncher.LOG.debug("Attributes: " + parser.getAttributeCount());
             while (i-- > 0) {
                 String name = parser.getAttributeName(i);
                 String value = parser.getAttributeValue(i);
-                if (name.equals("type"))
-                    isJava = value.equals("java");
+                if (name.equals("type")) {
+                    if (value.equals("java"))
+                        isJava = true;
+                    else if (value.equals("json"))
+                        isJson = true;
+                    else if (value.equals("stdout-json"))
+                        isStdout = true;
+                }
                 else if (name.equals("dynamic"))
                     isDynamic = value.equals("true");
                 else if (name.equals("jar"))
                     jarFile = value;
+                else if (name.equals("params"))
+                    stdoutParams = value;
+                else if (name.equals("timeout")) {
+                    try {
+                        stdoutTimeout = Integer.parseInt(value);
+                    } catch (NumberFormatException e) {
+                        throw new IOException("Bad timeout value: " + value);
+                    }
+                }
                 KindleLauncher.LOG.debug(MENU_ATTRIBUTES, new String[]{name, value}, "");
             }
 
@@ -210,13 +238,19 @@ public class ExtensionsLoader {
                 Class cls = classLoader.loadClass(text);
                 menu = (Menuable) cls.newInstance();
                 KindleLauncher.LOG.debug("Loaded class: " + text);
-            } else {
+            } else if (isJson) {
                 File jsonFile = new File(extDir, text);
                 JSONMenu jsonMenu = new JSONMenu(jsonFile);
                 jsonMenu.setDynamic(isDynamic);
                 jsonMenu.parseJSONMenu();
                 menu = jsonMenu;
                 KindleLauncher.LOG.debug("Loaded menu: " + jsonFile.getAbsolutePath());
+            } else if (isStdout) {
+                StdoutJSONMenu stdoutMenu = new StdoutJSONMenu(text, extDir, stdoutParams, stdoutTimeout);
+                menu = stdoutMenu;
+                KindleLauncher.LOG.debug("Loaded stdout-json menu: <" + stdoutMenu.getScriptStr() + ">");
+            } else {
+                throw new IOException("Unknown or unspecified menu type encountered");
             }
 
             extObj.setMenu(menu);

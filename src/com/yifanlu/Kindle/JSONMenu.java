@@ -38,7 +38,7 @@ import java.util.Iterator;
 public class JSONMenu implements Menuable {
     private static final LogMessage JSON_MENU_ITEM = new LogMessage("JsonMenuItem", new String[]{"name", "action", "params"});
     private File mJsonFile;
-    private LauncherAction[] mMenuItems;
+    protected LauncherAction[] mMenuItems;
     private boolean mDynamic;
 
     /**
@@ -132,6 +132,17 @@ public class JSONMenu implements Menuable {
         FileReader read = new FileReader(mJsonFile);
         JSONParser parse = new JSONParser();
         JSONObject obj = (JSONObject) parse.parse(read);
+        updateActions(obj);
+    }
+
+    /** 
+     * Takes loaded JSONObject, converts it to LauncherAction and 
+     * adds its menu items if it is a submenu or adds itself
+     *
+     * @throws IOException    if there is a problem reading the JSON text
+     * @throws ParseException if there is a problem parsing the JSON text
+     */
+    protected void updateActions(JSONObject obj) throws IOException, ParseException {
         LauncherAction action = jsonToAction(obj, null);
         if (action instanceof LauncherMenu && action.getValue().equals("No Text")) {
             mMenuItems = ((LauncherMenu) action).getMenuItems();
